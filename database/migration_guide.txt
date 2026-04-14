@@ -1,0 +1,44 @@
+-- Migration Script: WordPress zu neue Datenbank
+-- 
+-- ANLEITUNG:
+-- 1. Öffne die exportierte SQL-Datei aus WordPress
+-- 2. Finde alle INSERT Statements
+-- 3. Ersetze die Tabellennamen und Spalten mit diesem Mapping:
+
+-- Beispiel WordPress INSERT:
+-- INSERT INTO `wp_wpa_signers` (id, signer_no, first_name, last_name, email, birth_date, country, ...)
+
+-- Wird zu:
+-- INSERT INTO `signers` (signer_no, first_name, last_name, email, birth_date, country, ...)
+
+-- WICHTIG: Spalten-Mapping (Alt → Neu):
+-- signer_no → signer_no (gleich)
+-- first_name → first_name (gleich)
+-- last_name → last_name (gleich)
+-- email → email (gleich)
+-- birth_date → birth_date (gleich)
+-- country → country (gleich)
+-- gender → gender (gleich)
+-- title_field → title_field (gleich)
+-- profession → profession (gleich)
+-- function_title → function_title (gleich)
+-- organization → organization (gleich)
+-- place → place (gleich)
+-- public_name → public_name (gleich)
+-- public_approved → public_approved (gleich)
+-- wants_postal → wants_postal (gleich)
+-- street → street (gleich)
+-- postal_code → postal_code (gleich)
+-- city → city (gleich)
+-- country_address → country_address (gleich)
+-- created_at → created_at (gleich)
+
+-- SCHRITTE:
+-- 1. Entferne alle "DROP TABLE" und "CREATE TABLE" Zeilen
+-- 2. Ersetze `wp_wpa_signers` mit `signers`
+-- 3. Entferne die ID-Spalte aus den INSERTs (wird automatisch generiert)
+-- 4. Speichere als neue Datei: migration_data.sql
+
+-- Beispiel-Ersetzung in einem Text-Editor:
+-- Suche nach: INSERT INTO `wp_wpa_signers`
+-- Ersetze mit: INSERT INTO `signers`

@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply text-gray-900 bg-white;
+  }
+  
+  h1 {
+    @apply text-4xl font-bold text-peace-blue mb-6;
+  }
+  
+  h2 {
+    @apply text-3xl font-bold text-peace-blue mb-4;
+  }
+  
+  h3 {
+    @apply text-2xl font-semibold text-gray-900 mb-3;
+  }
+  
+  p {
+    @apply text-gray-700 leading-relaxed mb-4;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-gradient-to-r from-peace-blue to-peace-light text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105;
+  }
+  
+  .btn-secondary {
+    @apply bg-white text-peace-blue border-2 border-peace-blue px-6 py-3 rounded-xl font-semibold hover:bg-peace-blue hover:text-white transition-all duration-300;
+  }
+  
+  .card {
+    @apply bg-white rounded-2xl shadow-md p-6 hover:shadow-lg transition-shadow;
+  }
+  
+  .accordion-item {
+    @apply border border-gray-200 rounded-xl mb-4 overflow-hidden;
+  }
+  
+  .accordion-header {
+    @apply w-full text-left px-6 py-4 bg-gradient-to-r from-peace-blue to-peace-light text-white font-semibold text-lg flex justify-between items-center hover:opacity-90 transition-opacity;
+  }
+  
+  .accordion-content {
+    @apply px-6 py-4 bg-gray-50;
+  }
+}
