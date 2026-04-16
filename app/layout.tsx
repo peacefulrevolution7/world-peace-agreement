@@ -1,32 +1,30 @@
-'use client';
+import ‘./globals.css’
+import type { Metadata } from ‘next’
+import { Inter } from ‘next/font/google’
+import Header from ‘@/components/Header’
+import Footer from ‘@/components/Footer’
 
-import { useState } from 'react';
-import './globals.css';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
-import { Language } from '@/lib/translations';
+const inter = Inter({ subsets: [‘latin’] })
+
+export const metadata: Metadata = {
+title: ‘Weltfriedensabkommen’,
+description: ‘Ein Friedensvertrag zwischen Weltbürgern’,
+}
 
 export default function RootLayout({
-  children,
+children,
 }: {
-  children: React.ReactNode;
+children: React.ReactNode
 }) {
-  const [currentLang, setCurrentLang] = useState<Language>('en');
-
-  return (
-    <html lang={currentLang}>
-      <head>
-        <title>World Peace Agreement</title>
-        <meta name="description" content="A global movement for peace between world citizens" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-      </head>
-      <body>
-        <Header currentLang={currentLang} onLanguageChange={setCurrentLang} />
-        <main className="min-h-screen">
-          {children}
-        </main>
-        <Footer currentLang={currentLang} />
-      </body>
-    </html>
-  );
+return (
+<html lang="de">
+<body className={inter.className}>
+<Header />
+<main className="min-h-screen">
+{children}
+</main>
+<Footer />
+</body>
+</html>
+)
 }
