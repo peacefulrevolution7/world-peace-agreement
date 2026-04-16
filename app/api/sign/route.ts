@@ -1,67 +1,68 @@
 import { NextRequest, NextResponse } from 'next/server';
-import mysql from 'mysql2/promise';
-
-// Datenbank-Verbindung
-async function getConnection() {
-  return await mysql.createConnection({
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'wpa_db',
-  });
-}
+import { sql } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
   try {
-    const data = await request.json();
-    const connection = await getConnection();
+    const body = await request.json();
+    const { firstName, lastName, email, birthDate, country, gender, publicName } = body;
 
-    // Nächste Signatur-Nummer ermitteln
-    const [rows]: any = await connection.execute(
-      'SELECT MAX(signer_no) as max_no FROM signers'
-    );
-    const nextNo = (rows[0]?.max_no || 0) + 1;
+    if (!firstName || !lastName || !email) {
+      return NextResponse.json(
+        { error: 'Vorname, Nachname und E-Mail sind erforderlich' },
+        { status: 400 }
+      );
+    }
 
-    // Unterzeichner in Datenbank speichern
-    await connection.execute(
-      `INSERT INTO signers (
-        signer_no, first_name, last_name, email, birth_date, country, gender,
-        title_field, profession, function_title, organization, place,
-        public_name, wants_postal, street, postal_code, city, country_address,
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return NextResponse.json(
+        { error: 'Ungültige E-Mail-Adresse' },
+        { status: 400 }
+      );
+    }
+
+    const result = await sql`
+      INSERT INTO signers (
+        first_name, 
+        last_name, 
+        email, 
+        birth_date, 
+        country, 
+        gender, 
+        public_name,
         created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
-      [
-        nextNo,
-        data.firstName,
-        data.lastName,
-        data.email,
-        data.birthDate,
-        data.country,
-        data.gender || null,
-        data.titleField || null,
-        data.profession || null,
-        data.functionTitle || null,
-        data.organization || null,
-        data.publicCity || null,
-        data.publicName ? 1 : 0,
-        data.wantsPostal ? 1 : 0,
-        data.street || null,
-        data.postalCode || null,
-        data.city || null,
-        data.countryAddress || null,
-      ]
-    );
+      )
+      VALUES (
+        ${firstName},
+        ${lastName},
+        ${email},
+        ${birthDate || null},
+        ${country || null},
+        ${gender || null},
+        ${publicName || false},
+        NOW()
+      )
+      RETURNING id
+    `;
 
-    await connection.end();
-
-    return NextResponse.json({ 
-      success: true, 
-      signerNo: nextNo 
+    return NextResponse.json({
+      success: true,
+      message: 'Signatur erfolgreich gespeichert!',
+      signerId: result[0].id
     });
-  } catch (error) {
+
+  } catch (error: any) {
     console.error('Error saving signature:', error);
+    
+    if (error.code === '23505') {
+      return NextResponse.json(
+        { error: 'Diese E-Mail-Adresse wurde bereits verwendet' },
+        { status: 409 }
+      );
+    }
+
     return NextResponse.json(
-      { success: false, error: 'Failed to save signature' },
+      { error: 'Fehler beim Speichern der Signatur' },
       { status: 500 }
     );
   }
@@ -69,28 +70,42 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const connection = await getConnection();
-    
-    // Gesamtzahl der Unterzeichner
-    const [countRows]: any = await connection.execute(
-      'SELECT COUNT(*) as total FROM signers'
-    );
-    
-    // Unterzeichner nach Ländern
-    const [countryRows]: any = await connection.execute(
-      'SELECT country, COUNT(*) as count FROM signers GROUP BY country ORDER BY count DESC'
-    );
+    const { searchParams } = new URL(request.url);
+    const limit = parseInt(searchParams.get('limit') || '100');
+    const offset = parseInt(searchParams.get('offset') || '0');
 
-    await connection.end();
+    const signers = await sql`
+      SELECT 
+        id,
+        first_name,
+        last_name,
+        country,
+        created_at,
+        public_name
+      FROM signers
+      WHERE verified = true
+      ORDER BY created_at DESC
+      LIMIT ${limit}
+      OFFSET ${offset}
+    `;
+
+    const countResult = await sql`
+      SELECT COUNT(*) as total 
+      FROM signers 
+      WHERE verified = true
+    `;
 
     return NextResponse.json({
-      total: countRows[0].total,
-      byCountry: countryRows,
+      signers,
+      total: parseInt(countResult[0].total),
+      limit,
+      offset
     });
+
   } catch (error) {
-    console.error('Error fetching stats:', error);
+    console.error('Error fetching signatures:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch stats' },
+      { error: 'Fehler beim Laden der Signaturen' },
       { status: 500 }
     );
   }
