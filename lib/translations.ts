@@ -1,3 +1,14 @@
+export const languages = [
+  { code: 'en', name: 'English' },
+  { code: 'de', name: 'Deutsch' },
+  { code: 'fr', name: 'Français' },
+  { code: 'es', name: 'Español' },
+  { code: 'ru', name: 'Русский' },
+  { code: 'zh', name: '中文' },
+  { code: 'pt', name: 'Português' },
+  { code: 'ar', name: 'العربية' }
+];
+
 export const translations = {
   en: {
     nav: {
@@ -264,3 +275,4 @@ export const translations = {
     signatories: { title: "الموقعون", total: "المجموع", search: "بحث...", name: "الاسم", country: "الدولة", date: "التاريخ", noResults: "لم يتم العثور." }
   }
 };
+
