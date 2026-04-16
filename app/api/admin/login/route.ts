@@ -1,57 +1,61 @@
 import { NextRequest, NextResponse } from 'next/server';
-import mysql from 'mysql2/promise';
-
-async function getConnection() {
-  return await mysql.createConnection({
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'wpa_db',
-  });
-}
+import { sql } from '@/lib/db';
+import bcrypt from 'bcryptjs';
 
 export async function POST(request: NextRequest) {
   try {
-    const { username, password } = await request.json();
-    
-    // Einfache Authentifizierung (in Produktion sollte bcrypt verwendet werden)
-    // Standard-Login: admin / admin123
-    if (username === 'admin' && password === 'admin123') {
-      // Generiere einfaches Token (in Produktion JWT verwenden)
-      const token = Buffer.from(`${username}:${Date.now()}`).toString('base64');
-      
-      return NextResponse.json({
-        success: true,
-        token,
-      });
+    const body = await request.json();
+    const { username, password } = body;
+
+    if (!username || !password) {
+      return NextResponse.json(
+        { error: 'Benutzername und Passwort erforderlich' },
+        { status: 400 }
+      );
     }
 
-    // Alternativ: Aus Datenbank prüfen
-    const connection = await getConnection();
-    const [rows]: any = await connection.execute(
-      'SELECT * FROM admin_users WHERE username = ?',
-      [username]
-    );
-    await connection.end();
+    const users = await sql`
+      SELECT 
+        id,
+        username,
+        password_hash,
+        email
+      FROM admin_users
+      WHERE username = ${username}
+      LIMIT 1
+    `;
 
-    if (rows.length > 0) {
-      // Hier sollte Passwort-Hash verglichen werden
-      // Für jetzt: einfacher Vergleich
-      const token = Buffer.from(`${username}:${Date.now()}`).toString('base64');
-      return NextResponse.json({
-        success: true,
-        token,
-      });
+    if (users.length === 0) {
+      return NextResponse.json(
+        { error: 'Ungültige Anmeldedaten' },
+        { status: 401 }
+      );
     }
 
-    return NextResponse.json(
-      { success: false, error: 'Ungültige Anmeldedaten' },
-      { status: 401 }
-    );
+    const user = users[0];
+    const passwordMatch = await bcrypt.compare(password, user.password_hash);
+
+    if (!passwordMatch) {
+      return NextResponse.json(
+        { error: 'Ungültige Anmeldedaten' },
+        { status: 401 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Login erfolgreich',
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email
+      }
+    });
+
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('Error during login:', error);
     return NextResponse.json(
-      { success: false, error: 'Server-Fehler' },
+      { error: 'Login-Fehler' },
       { status: 500 }
     );
   }
