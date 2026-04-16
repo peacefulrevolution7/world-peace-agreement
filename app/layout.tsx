@@ -8,22 +8,17 @@ const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'Weltfriedensabkommen',
-  description: 'Ein Friedensvertrag zwischen Weltbürgern',
+  description: 'Ein Friedensvertrag zwischen Weltbuergern',
 }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="de">
       <body className={inter.className}>
         <Header />
-        <main className="min-h-screen">
-          {children}
-        </main>
+        <main className="min-h-screen">{children}</main>
         <Footer />
       </body>
     </html>
   )
+}
