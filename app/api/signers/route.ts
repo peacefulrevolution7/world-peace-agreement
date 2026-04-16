@@ -1,40 +1,76 @@
 import { NextRequest, NextResponse } from 'next/server';
-import mysql from 'mysql2/promise';
-
-async function getConnection() {
-  return await mysql.createConnection({
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'wpa_db',
-  });
-}
+import { sql } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
   try {
-    const connection = await getConnection();
-    
-    // Nur öffentlich freigegebene Unterzeichner
-    const [rows]: any = await connection.execute(
-      `SELECT 
-        id, first_name, last_name, country, place,
-        title_field, profession, function_title, organization,
-        created_at
-      FROM signers 
-      WHERE public_name = 1 AND public_approved = 1
-      ORDER BY created_at DESC
-      LIMIT 100`
-    );
+    const { searchParams } = new URL(request.url);
+    const limit = parseInt(searchParams.get('limit') || '100');
+    const offset = parseInt(searchParams.get('offset') || '0');
 
-    await connection.end();
+    const signers = await sql`
+      SELECT 
+        id,
+        first_name,
+        last_name,
+        email,
+        country,
+        created_at,
+        verified,
+        public_name
+      FROM signers
+      ORDER BY created_at DESC
+      LIMIT ${limit}
+      OFFSET ${offset}
+    `;
+
+    const countResult = await sql`
+      SELECT COUNT(*) as total FROM signers
+    `;
 
     return NextResponse.json({
-      signers: rows,
+      signers,
+      total: parseInt(countResult[0].total),
+      limit,
+      offset
     });
+
   } catch (error) {
     console.error('Error fetching signers:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch signers' },
+      { error: 'Fehler beim Laden der Signaturen' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { id, verified } = body;
+
+    if (!id) {
+      return NextResponse.json(
+        { error: 'ID erforderlich' },
+        { status: 400 }
+      );
+    }
+
+    const result = await sql`
+      UPDATE signers 
+      SET verified = ${verified}
+      WHERE id = ${id}
+      RETURNING *
+    `;
+
+    return NextResponse.json({
+      success: true,
+      signer: result[0]
+    });
+
+  } catch (error) {
+    console.error('Error updating signer:', error);
+    return NextResponse.json(
+      { error: 'Fehler beim Aktualisieren' },
       { status: 500 }
     );
   }
