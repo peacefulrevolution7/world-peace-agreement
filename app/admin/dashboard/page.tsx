@@ -71,4 +71,48 @@ export default function AdminDashboard() {
           </nav>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-gray-500 text-sm font-medium">Gesamt Signaturen</h3>
+            <p className="text-3xl font-bold text-gray-900 mt-2">
+              {stats?.total || 0}
+            </p>
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-gray-500 text-sm font-medium">Verifiziert</h3>
+            <p className="text-3xl font-bold text-green-600 mt-2">
+              {stats?.verified || 0}
+            </p>
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-gray-500 text-sm font-medium">Heute</h3>
+            <p className="text-3xl font-bold text-blue-600 mt-2">
+              {stats?.today || 0}
+            </p>
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-gray-500 text-sm font-medium">Diese Woche</h3>
+            <p className="text-3xl font-bold text-purple-600 mt-2">
+              {stats?.thisWeek || 0}
+            </p>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Top Länder</h2>
+          <div className="space-y-3">
+            {stats?.topCountries?.map((country: any, index: number) => (
+              <div key={index} className="flex justify-between items-center">
+                <span className="text-gray-700">{country.country}</span>
+                <span className="font-semibold text-gray-900">{country.count}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
