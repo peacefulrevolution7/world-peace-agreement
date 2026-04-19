@@ -10,7 +10,6 @@ export async function GET(request: NextRequest) {
     const signers = await sql`
       SELECT 
         id,
-        signer_no,
         first_name,
         last_name,
         email,
@@ -100,45 +99,4 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      signer: result[0]
-    });
-
-  } catch (error) {
-    console.error('Error updating signer:', error);
-    return NextResponse.json(
-      { error: 'Fehler beim Aktualisieren' },
-      { status: 500 }
-    );
-  }
-}
-
-export async function DELETE(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
-
-    if (!id) {
-      return NextResponse.json(
-        { error: 'ID erforderlich' },
-        { status: 400 }
-      );
-    }
-
-    await sql`
-      DELETE FROM signers 
-      WHERE id = ${id}
-    `;
-
-    return NextResponse.json({
-      success: true,
-      message: 'Signatur erfolgreich gelöscht'
-    });
-
-  } catch (error) {
-    console.error('Error deleting signer:', error);
-    return NextResponse.json(
-      { error: 'Fehler beim Löschen' },
-      { status: 500 }
-    );
-  }
-}
+      signer: result[​​​​​​​​​​​​​​​​
