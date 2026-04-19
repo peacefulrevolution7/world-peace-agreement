@@ -10,13 +10,24 @@ export async function GET(request: NextRequest) {
     const signers = await sql`
       SELECT 
         id,
+        signer_no,
         first_name,
         last_name,
         email,
         country,
-        created_at,
+        profession,
+        organization,
+        city,
+        title_field as title,
+        function_title,
+        place,
+        gender,
+        birth_date,
+        public_name,
+        public_approved,
         verified,
-        public_name
+        created_at,
+        updated_at
       FROM signers
       ORDER BY created_at DESC
       LIMIT ${limit}
@@ -46,7 +57,7 @@ export async function GET(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json();
-    const { id, verified } = body;
+    const { id, ...updates } = body;
 
     if (!id) {
       return NextResponse.json(
@@ -55,9 +66,24 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
+    // Build dynamic update query
+    const updateFields = Object.keys(updates)
+      .filter(key => updates[key] !== undefined)
+      .map((key, index) => `${key} = $${index + 2}`)
+      .join(', ');
+
+    if (!updateFields) {
+      return NextResponse.json(
+        { error: 'Keine Aktualisierungen angegeben' },
+        { status: 400 }
+      );
+    }
+
+    const values = [id, ...Object.values(updates).filter(v => v !== undefined)];
+
     const result = await sql`
       UPDATE signers 
-      SET verified = ${verified}
+      SET ${sql.unsafe(updateFields)}, updated_at = NOW()
       WHERE id = ${id}
       RETURNING *
     `;
@@ -71,6 +97,37 @@ export async function PATCH(request: NextRequest) {
     console.error('Error updating signer:', error);
     return NextResponse.json(
       { error: 'Fehler beim Aktualisieren' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json(
+        { error: 'ID erforderlich' },
+        { status: 400 }
+      );
+    }
+
+    await sql`
+      DELETE FROM signers 
+      WHERE id = ${id}
+    `;
+
+    return NextResponse.json({
+      success: true,
+      message: 'Signatur erfolgreich gelöscht'
+    });
+
+  } catch (error) {
+    console.error('Error deleting signer:', error);
+    return NextResponse.json(
+      { error: 'Fehler beim Löschen' },
       { status: 500 }
     );
   }
