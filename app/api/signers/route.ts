@@ -57,7 +57,20 @@ export async function GET(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json();
-    const { id, ...updates } = body;
+    const { 
+      id, 
+      first_name, 
+      last_name, 
+      email, 
+      profession, 
+      organization, 
+      city, 
+      title, 
+      country, 
+      function_title, 
+      place, 
+      verified 
+    } = body;
 
     if (!id) {
       return NextResponse.json(
@@ -66,24 +79,21 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    // Build dynamic update query
-    const updateFields = Object.keys(updates)
-      .filter(key => updates[key] !== undefined)
-      .map((key, index) => `${key} = $${index + 2}`)
-      .join(', ');
-
-    if (!updateFields) {
-      return NextResponse.json(
-        { error: 'Keine Aktualisierungen angegeben' },
-        { status: 400 }
-      );
-    }
-
-    const values = [id, ...Object.values(updates).filter(v => v !== undefined)];
-
     const result = await sql`
       UPDATE signers 
-      SET ${sql.unsafe(updateFields)}, updated_at = NOW()
+      SET 
+        first_name = ${first_name},
+        last_name = ${last_name},
+        email = ${email},
+        profession = ${profession},
+        organization = ${organization},
+        city = ${city},
+        title_field = ${title},
+        country = ${country},
+        function_title = ${function_title},
+        place = ${place},
+        verified = ${verified},
+        updated_at = NOW()
       WHERE id = ${id}
       RETURNING *
     `;
